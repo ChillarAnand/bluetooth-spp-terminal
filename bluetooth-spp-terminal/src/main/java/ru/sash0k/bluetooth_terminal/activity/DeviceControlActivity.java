@@ -12,17 +12,23 @@ import android.preference.PreferenceManager;
 import android.text.Html;
 import android.text.InputFilter;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import ru.sash0k.bluetooth_terminal.DeviceData;
@@ -57,8 +63,20 @@ public final class DeviceControlActivity extends BaseActivity {
     private boolean show_timings, show_direction;
     private String command_ending;
     private String deviceName;
+    LinearLayout linearLayout1, linearLayout2, linearLayout3, linearLayout4, linearLayout5, linearLayout6, linearLayout7, linearLayout8;
+    Button sendButton;
+    ArrayList<String> commands1 = new ArrayList<>();
+    ArrayList<String> commands2 = new ArrayList<>();
+    ArrayList<String> commands3 = new ArrayList<>();
+    ArrayList<String> commands4 = new ArrayList<>();
+    ArrayList<String> commands5 = new ArrayList<>();
+    ArrayList<String> commands6 = new ArrayList<>();
+    ArrayList<String> commands7 = new ArrayList<>();
+    ArrayList<String> commands8 = new ArrayList<>();
+    final static int ROW_COUNT = 4;
 
     @Override
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         PreferenceManager.setDefaultValues(this, R.xml.settings_activity, false);
@@ -71,6 +89,14 @@ public final class DeviceControlActivity extends BaseActivity {
         MSG_CONNECTED = getString(R.string.msg_connected);
 
         setContentView(R.layout.activity_terminal);
+        linearLayout1 = findViewById(R.id.linear_layout1);
+        linearLayout2 = findViewById(R.id.linear_layout2);
+        linearLayout3 = findViewById(R.id.linear_layout3);
+        linearLayout4 = findViewById(R.id.linear_layout4);
+        linearLayout5 = findViewById(R.id.linear_layout5);
+        linearLayout6 = findViewById(R.id.linear_layout6);
+        linearLayout7 = findViewById(R.id.linear_layout7);
+        sendButton = findViewById(R.id.send_button);
         if (isConnected() && (savedInstanceState != null)) {
             setDeviceName(savedInstanceState.getString(DEVICE_NAME));
         } else getActionBar().setSubtitle(MSG_NOT_CONNECTED);
@@ -88,7 +114,9 @@ public final class DeviceControlActivity extends BaseActivity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_SEND) {
-                    sendCommand(null);
+                    createButton(commandEditText.getText().toString());
+                    sendCommand(commandEditText.getText().toString());
+                    clearCommandText();
                     return true;
                 }
                 return false;
@@ -100,7 +128,9 @@ public final class DeviceControlActivity extends BaseActivity {
                 if (event.getAction() == KeyEvent.ACTION_DOWN) {
                     switch (keyCode) {
                         case KeyEvent.KEYCODE_ENTER:
-                            sendCommand(null);
+                            createButton(commandEditText.getText().toString());
+                            sendCommand(commandEditText.getText().toString());
+                            clearCommandText();
                             return true;
                         default:
                             break;
@@ -109,6 +139,64 @@ public final class DeviceControlActivity extends BaseActivity {
                 return false;
             }
         });
+
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                createButton(commandEditText.getText().toString());
+                sendCommand(commandEditText.getText().toString());
+                clearCommandText();
+            }
+        });
+    }
+
+    private void clearCommandText() {
+        commandEditText.getText().clear();
+    }
+
+    private void createButton(String str) {
+        if (!TextUtils.isEmpty(str) && !isCommandPresent(str)) {
+            final Button button = new Button(this);
+            button.setText(str);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT);
+            layoutParams.weight = 1;
+            button.setLayoutParams(layoutParams);
+            button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    sendCommand(button.getText().toString());
+                }
+            });
+            if (linearLayout1.getChildCount() < ROW_COUNT) {
+                linearLayout1.addView(button);
+                commands1.add(button.getText().toString());
+            } else if (linearLayout2.getChildCount() < ROW_COUNT) {
+                linearLayout2.addView(button);
+                commands2.add(button.getText().toString());
+            } else if (linearLayout3.getChildCount() < ROW_COUNT) {
+                linearLayout3.addView(button);
+                commands3.add(button.getText().toString());
+            } else if (linearLayout4.getChildCount() < ROW_COUNT) {
+                linearLayout4.addView(button);
+                commands4.add(button.getText().toString());
+            } else if (linearLayout5.getChildCount() < ROW_COUNT) {
+                linearLayout5.addView(button);
+                commands5.add(button.getText().toString());
+            } else if (linearLayout6.getChildCount() < ROW_COUNT) {
+                linearLayout6.addView(button);
+                commands6.add(button.getText().toString());
+            } else if (linearLayout7.getChildCount() < ROW_COUNT) {
+                linearLayout7.addView(button);
+                commands7.add(button.getText().toString());
+            } else {
+
+            }
+        }
+    }
+
+    private boolean isCommandPresent(String str) {
+        return commands1.contains(str) || commands2.contains(str) || commands3.contains(str) || commands4.contains(str) || commands5.contains(str) || commands6.contains(str) || commands7.contains(str) || commands8.contains(str);
     }
     // ==========================================================================
 
@@ -309,9 +397,8 @@ public final class DeviceControlActivity extends BaseActivity {
     /**
      * Отправка команды устройству
      */
-    public void sendCommand(View view) {
+    public void sendCommand(String commandString) {
         if (commandEditText != null) {
-            String commandString = commandEditText.getText().toString();
             if (commandString.isEmpty()) return;
 
             // Дополнение команд в hex
@@ -319,6 +406,7 @@ public final class DeviceControlActivity extends BaseActivity {
                 commandString = "0" + commandString;
                 commandEditText.setText(commandString);
             }
+
 
             // checksum
             if (checkSum) {
